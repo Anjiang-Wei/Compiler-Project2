@@ -48,15 +48,15 @@ class IRPrinter : public IRVisitor {
 
     void print_indent() {
         for (int i = 0; i < indent; ++i)
-            oss << " ";
+            oss << "\t";
     }
 
     void enter() {
-        indent += 2;
+        indent += 1;
     }
 
     void exit() {
-        indent -= 2;
+        indent -= 1;
     }
 
     void visit(Ref<const IntImm>) override;
@@ -81,6 +81,7 @@ class IRPrinter : public IRVisitor {
     std::ostringstream oss;
     int indent;
     bool print_range;
+    bool dom_first_flag;
     bool print_arg;
 };
 

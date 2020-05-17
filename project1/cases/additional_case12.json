@@ -1,0 +1,7 @@
+{
+    "name": "kernel_additional_case12",
+    "ins": ["B", "C", "D"],
+    "outs": ["A"],
+    "data_type": "float",
+    "kernel": "A<3>[i] = (B<3>[j] + C<3>[k]) * D<3>[l] / 3;"
+}

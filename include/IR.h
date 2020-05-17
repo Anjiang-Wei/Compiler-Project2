@@ -888,6 +888,8 @@ enum class KernelType : uint8_t {
 class Kernel : public GroupNode, public std::enable_shared_from_this<Kernel> {
  public:
     std::string name;
+    // std::vector<std::string> inputs;
+    // std::vector<std::string> outputs;
     std::vector<Expr> inputs;
     std::vector<Expr> outputs;
     std::vector<Stmt> stmt_list;
