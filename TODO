@@ -1,0 +1,4 @@
+1. 读入kernel，建一个新的IRVisitor；
+2. 传入IRMutator，进行求导；
+3. 建一个新的IRPrinter，输出成project1的kernel；
+4. 将新的kernel传给project1的部分；
