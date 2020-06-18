@@ -23,6 +23,7 @@
 */
 
 #include "IRMutator.h"
+#include "IRPrinter.h"
 
 namespace Boost {
 
@@ -54,6 +55,10 @@ Expr IRMutator::visit(Ref<const UIntImm> op) {
 
 
 Expr IRMutator::visit(Ref<const FloatImm> op) {
+    if (is_op1)
+        op1_grad = FloatImm::make(op->type(), 0.0);
+    else
+        op2_grad = FloatImm::make(op->type(), 0.0);
     return op;
 }
 
@@ -70,8 +75,45 @@ Expr IRMutator::visit(Ref<const Unary> op) {
 
 
 Expr IRMutator::visit(Ref<const Binary> op) {
+    Expr res;
+    bool saved_op = is_op1;
+
+    is_op1 = true;
     Expr new_a = mutate(op->a);
+    Expr op1_grad_saved = op1_grad;
+
+    is_op1 = false;
     Expr new_b = mutate(op->b);
+
+    is_op1 = saved_op;
+    op1_grad = op1_grad_saved;
+    switch(op->op_type){
+        case BinaryOpType::Add: 
+        case BinaryOpType::Sub: {
+            res = Binary::make(op->type(), op->op_type, op1_grad, op2_grad);
+            break;
+        }
+        case BinaryOpType::Mul: {
+            Expr item1 = Binary::make(op->type(), op->op_type, op1_grad, new_b);
+            Expr item2 = Binary::make(op->type(), op->op_type, new_a, op2_grad);
+            res = Binary::make(op->type(), BinaryOpType::Add, item1, item2);
+            break;
+        }
+        case BinaryOpType::Div: {
+            Expr item1 = Binary::make(op->type(), BinaryOpType::Mul, op1_grad, new_b);
+            Expr item2 = Binary::make(op->type(), BinaryOpType::Mul, new_a, op2_grad);
+            Expr divisor = Binary::make(op->type(), BinaryOpType::Mul, new_b, new_b);
+            Expr up = Binary::make(op->type(), BinaryOpType::Sub, item1, item2);
+            res = Binary::make(op->type(), BinaryOpType::Div, up, divisor);
+            break;
+        }
+        default: {
+        }
+    }
+    if (is_op1)
+        op1_grad = Cast::make(res->type(), res->type(), res);
+    else
+        op2_grad = Cast::make(res->type(), res->type(), res);
     return Binary::make(op->type(), op->op_type, new_a, new_b);
 }
 
@@ -114,11 +156,29 @@ Expr IRMutator::visit(Ref<const Ramp> op) {
 
 
 Expr IRMutator::visit(Ref<const Var> op) {
-    std::vector<Expr> new_args;
-    for (auto arg : op->args) {
-        new_args.push_back(mutate(arg));
+    if (is_left) {
+        left = Var::make(op->type(), "d" + op->name, op->args, op->shape);
+        set_left = true;
+        std::vector<Expr> new_args;
+        for (auto arg : op->args) {
+            new_args.push_back(mutate(arg));
+        }
+        return Var::make(op->type(), op->name, new_args, op->shape);
     }
-    return Var::make(op->type(), op->name, new_args, op->shape);
+    if (set_left) {
+        if (op->name == grad_to) {
+            if (is_op1)
+                op1_grad = left;
+            else
+                op2_grad = left;
+        } else {
+            if (is_op1)
+                op1_grad = FloatImm::make(op->type(), 0.0);
+            else
+                op2_grad = FloatImm::make(op->type(), 0.0);
+        }
+    } 
+    return Var::make(op->type(), op->name, op->args, op->shape);   
 }
 
 
@@ -157,7 +217,9 @@ Stmt IRMutator::visit(Ref<const IfThenElse> op) {
 
 
 Stmt IRMutator::visit(Ref<const Move> op) {
+    is_left = true;
     Expr new_dst = mutate(op->dst);
+    is_left = false;
     Expr new_src = mutate(op->src);
     return Move::make(new_dst, new_src, op->move_type);
 }

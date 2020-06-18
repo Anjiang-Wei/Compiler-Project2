@@ -37,19 +37,22 @@ int main() {
     // C
     Expr expr_C = Var::make(data_type, "C", {i, j}, {M, N});
 
+    Expr expr_D = Var::make(data_type, "D", {i, j}, {M, N});
+
     // main stmt
     Stmt main_stmt = Move::make(
-        expr_C,
-        Binary::make(data_type, BinaryOpType::Add, expr_C,
-            Binary::make(data_type, BinaryOpType::Mul, expr_A, expr_B)),
+        expr_D,
+        Binary::make(data_type, BinaryOpType::Mul, 
+            Binary::make(data_type, BinaryOpType::Mul, expr_A, expr_B),
+            expr_C),
         MoveType::MemToMem
     );
 
     // loop nest
-    Stmt loop_nest = LoopNest::make({i, j, k}, {main_stmt});
+    // Stmt loop_nest = LoopNest::make({i, j, k}, {main_stmt});
 
     // kernel
-    Group kernel = Kernel::make("simple_gemm", {expr_A, expr_B}, {expr_C}, {loop_nest}, KernelType::CPU);
+    Group kernel = Kernel::make("simple_gemm", {expr_A, expr_B}, {expr_C}, {main_stmt}, KernelType::CPU);
 
     // visitor
     IRVisitor visitor;
@@ -57,13 +60,21 @@ int main() {
 
     // mutator
     IRMutator mutator;
+    mutator.grad_to = "A";
     kernel = mutator.mutate(kernel);
+    
 
     // printer
     IRPrinter printer;
     std::string code = printer.print(kernel);
 
     std::cout << code;
+     
+    IRPrinter printer1;
+    std::cout << printer1.print(mutator.op1_grad) << "\n";
+
+    IRPrinter printer2;
+    std::cout << printer2.print(mutator.op2_grad) << "\n";
 
     std::cout << "Success!\n";
     return 0;

@@ -63,7 +63,8 @@ void IRPrinter::visit(Ref<const UIntImm> op) {
 
 
 void IRPrinter::visit(Ref<const FloatImm> op) {
-    oss << "(" << op->type() << " " << op->value() << ")";
+    oss << op->value();
+    // oss << "(" << op->type() << " " << op->value() << ")";
 }
 
 
