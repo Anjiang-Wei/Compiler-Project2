@@ -139,7 +139,6 @@ Expr IRMutator::visit(Ref<const Call> op) {
         new_args.push_back(mutate(arg));
     }
     return Call::make(op->type(), new_args, op->func_name, op->call_type);
-
 }
 
 
@@ -167,6 +166,7 @@ Expr IRMutator::visit(Ref<const Var> op) {
     }
     if (set_left) {
         if (op->name == grad_to) {
+            // should be modified later for index transformation
             grad = Var::make(op->type(), "d" + op->name, op->args, op->shape);
             if (is_op1)
                 op1_grad = left;

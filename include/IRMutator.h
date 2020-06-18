@@ -56,12 +56,12 @@ class IRMutator {
     virtual Stmt visit(Ref<const IfThenElse>);
     virtual Stmt visit(Ref<const Move>);
     virtual Group visit(Ref<const Kernel>);
-    std::string grad_to;
-    Expr grad;
-    Expr left;
-    Expr op1_grad;
+    std::string grad_to; // the name of var that grad to
+    Expr grad; // left var of result stmt
+    Expr left; // left var of original stmt
+    Expr op1_grad; // temp store of gradient
     Expr op2_grad;
-    Stmt result;
+    Stmt result; // result stmt
     bool is_left = false;
     bool set_left = false;
     bool is_op1 = true;
