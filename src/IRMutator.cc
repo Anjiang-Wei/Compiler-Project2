@@ -167,6 +167,7 @@ Expr IRMutator::visit(Ref<const Var> op) {
     }
     if (set_left) {
         if (op->name == grad_to) {
+            grad = Var::make(op->type(), "d" + op->name, op->args, op->shape);
             if (is_op1)
                 op1_grad = left;
             else
@@ -221,6 +222,7 @@ Stmt IRMutator::visit(Ref<const Move> op) {
     Expr new_dst = mutate(op->dst);
     is_left = false;
     Expr new_src = mutate(op->src);
+    result = Move::make(grad, op1_grad, op->move_type);
     return Move::make(new_dst, new_src, op->move_type);
 }
 

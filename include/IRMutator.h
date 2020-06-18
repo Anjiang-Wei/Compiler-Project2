@@ -57,9 +57,11 @@ class IRMutator {
     virtual Stmt visit(Ref<const Move>);
     virtual Group visit(Ref<const Kernel>);
     std::string grad_to;
+    Expr grad;
     Expr left;
     Expr op1_grad;
     Expr op2_grad;
+    Stmt result;
     bool is_left = false;
     bool set_left = false;
     bool is_op1 = true;
