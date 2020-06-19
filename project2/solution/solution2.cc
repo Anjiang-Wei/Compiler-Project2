@@ -91,10 +91,11 @@ void generate_codes(const std::string &file_name) {
         ins.push_back(i.asString());
     }
     for (const auto &i : root["outs"]) {
-        if (std::find(ins.begin(), ins.end(), i.asString()) == ins.end()) {
+        if (std::find(ins.begin(), ins.end(), i.asString()) != ins.end()) {
             // assert this will not happen;
             assert (false);
         }
+        outs.push_back(i.asString());
     }
     for (const auto &i : root["grad_to"]) {
         grad_to.push_back(i.asString());
@@ -114,26 +115,39 @@ void generate_codes(const std::string &file_name) {
         throw (std::invalid_argument("Syntax parse error"));
     }
 
-    SimpleIRVisitor visitor;
-    visitor.visitProg(prog);
+    indexCollectVisitor dvisitor;
+    dvisitor.index_type = Boost::Internal::Type::int_scalar(32);
+    dvisitor.visitProg(prog);
+
+    SimpleIRVisitor svisitor;
+    svisitor.indexes = dvisitor.indexes;
+    if (dtype == "float")
+        svisitor.data_type = Boost::Internal::Type::float_scalar(32);
+    else if (dtype == "int")
+        svisitor.data_type = Boost::Internal::Type::int_scalar(32);
+    svisitor.visitProg(prog);
     // Build inputs and outputs
     std::vector<Expr> inputs;
     std::vector<Expr> outputs;
     size_t n = ins.size();
     for (size_t i = 0; i < n; i++) {
-        auto it = visitor.vars.find(ins[i]);
-        if (it != visitor.vars.end())
+        auto it = svisitor.vars.find(ins[i]);
+        if (it != svisitor.vars.end())
             inputs.push_back(it->second);
     }
     n = outs.size();
     for (size_t i = 0; i < n; i++) {
-        auto it = visitor.vars.find(outs[i]);
-        if (it != visitor.vars.end())
+        auto it = svisitor.vars.find(outs[i]);
+        if (it != svisitor.vars.end())
             outputs.push_back(it->second);
     }
     Boost::Internal::Group kernels =
-            Boost::Internal::Kernel::make(case_name, inputs, outputs, visitor.kernel_stmts,
+            Boost::Internal::Kernel::make(case_name, inputs, outputs, svisitor.kernel_stmts,
                                           Boost::Internal::KernelType::CPU);
+    /* [debug] [created by yy] */
+    std::cout << "\033[31m[DEBUG]\033[0m " << case_name << std::endl;
+    Boost::Internal::IRPrinter printer_;
+    std::cout << printer_.print(kernels) << std::endl;
 
     std::string new_kernels;
     for (const auto &grad : grad_to) {
@@ -144,6 +158,7 @@ void generate_codes(const std::string &file_name) {
         std::string new_kernel = printer.print(mutator.result);
         new_kernels += new_kernel;
     }
+    std::cout << new_kernels << std::endl;
 
     // ----------Use Project1 to build the final result----------
     std::vector<std::string> new_ins(ins), new_outs;
@@ -156,11 +171,11 @@ void generate_codes(const std::string &file_name) {
     generate_final_code(new_kernels, new_ins, new_outs, out_path, dtype, case_name);
 }
 
-void get_files(std::vector<std::string>& files) {
+void get_files(std::vector<std::string> &files) {
     /* Get all the files in `cases/`, and store them into `files`;
      * */
-    DIR* dirptr = opendir("./cases");
-    struct dirent * dp;
+    DIR *dirptr = opendir("./cases");
+    struct dirent *dp;
     while ((dp = readdir(dirptr)) != nullptr) {
         if (dp->d_name[0] == '.') continue;
         files.emplace_back(dp->d_name);
@@ -172,8 +187,10 @@ void get_files(std::vector<std::string>& files) {
 int main() {
     std::vector<std::string> file_names;
     get_files(file_names);
-    for (const auto & file_name: file_names) {
+    for (const auto &file_name: file_names) {
         std::string case_name = file_name.substr(0, file_name.length() - 5);
+        if (case_name == "case8") continue;
+        if (case_name == "case10") continue;
         generate_codes(case_name);
     }
     return 0;

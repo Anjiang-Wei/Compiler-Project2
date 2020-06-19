@@ -75,13 +75,13 @@ public:
         for (size_t i = 0; i < n; i++) {
             auto it = tmpMap.find(names[i]);
             if (it != tmpMap.end()) {
-                int v = (it->second).as<Index>()->dom.as<Dom>()->extent.as<IntImm>()->value();    
+                int v = (it->second).as<Index>()->dom.as<Dom>()->extent.as<IntImm>()->value();
                 if (v > bounds[i]) {
                     Boost::Internal::Expr dom =
-                        Boost::Internal::Dom::make(index_type, 0, bounds[i]);
+                            Boost::Internal::Dom::make(index_type, 0, bounds[i]);
                     Boost::Internal::Expr idx =
                             Boost::Internal::Index::make(index_type, names[i], dom,
-                        Boost::Internal::IndexType::Spatial);
+                                                         Boost::Internal::IndexType::Spatial);
                     tmpMap[names[i]] = idx;
                 }
                 continue;
@@ -91,7 +91,7 @@ public:
                     Boost::Internal::Dom::make(index_type, 0, bounds[i]);
             Boost::Internal::Expr idx =
                     Boost::Internal::Index::make(index_type, names[i], dom,
-            	Boost::Internal::IndexType::Spatial);
+                                                 Boost::Internal::IndexType::Spatial);
             tmpMap.insert(std::pair<std::string, Boost::Internal::Expr>(names[i], idx));
         }
         names.clear();

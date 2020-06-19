@@ -203,7 +203,7 @@ public:
         visitChildren(ctx);
         std::string name = ctx->ID()->getText();
         Expr var = Var::make(data_type, name, idx, shape);
-        for (const auto& item : idx) {
+        for (const auto &item : idx) {
             expr_idx.push_back(item);
         }
         idx.clear();
@@ -329,7 +329,7 @@ public:
             return Binary::make(data_type, BinaryOpType::Div, expr, op_pair.second);
         else if (op_pair.first == "%")
             return Binary::make(data_type, BinaryOpType::Mod, expr, op_pair.second);
-        else throw(std::invalid_argument("Unknown Error"));
+        else throw (std::invalid_argument("Unknown Error"));
     }
 
     antlrcpp::Any visitIdExprIR(projectExprParser::IdExprIRContext *ctx) override {
