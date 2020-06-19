@@ -78,23 +78,13 @@ Expr IRMutator::visit(Ref<const Binary> op) {
     bool zero_flag_r = (new_b.node_type() == IRNodeType::FloatImm);
 
     switch(op->op_type){
-        case BinaryOpType::Add: {
-            if (zero_flag_l && zero_flag_r) {
-                return FloatImm::make(op->type(), 0.0);
-            } else if (zero_flag_l) {
-                res = new_b;
-            } else if (zero_flag_r) {
-                res = new_a;
-            } else {
-                res = Binary::make(op->type(), op->op_type, new_a, new_b);
-            }
-            break;
-        }
+        case BinaryOpType::Add:
         case BinaryOpType::Sub: {
             if (zero_flag_l && zero_flag_r) {
                 return FloatImm::make(op->type(), 0.0);
             } else if (zero_flag_l) {
-                res = Unary::make(op->type(), UnaryOpType::Neg, new_b);
+                res = (op->op_type == BinaryOpType::Sub) ? 
+                    Unary::make(op->type(), UnaryOpType::Neg, new_b): new_b;
             } else if (zero_flag_r) {
                 res = new_a;
             } else {
@@ -183,20 +173,21 @@ Expr IRMutator::visit(Ref<const Var> op) {
     if (is_left) {
         left = Var::make(op->type(), "d" + op->name, op->args, op->shape);
         set_left = true;
-        std::vector<Expr> new_args;
-        for (auto arg : op->args) {
-            new_args.push_back(mutate(arg));
-        }
-        return Var::make(op->type(), op->name, new_args, op->shape);
-    }
-    if (set_left) {
+    } else if (set_left) {
         if (op->name == grad_to) {
-            // should be modified later for index transformation
             if (!grad_set) {
+                // should rename args later
                 grad = Var::make(op->type(), "d" + op->name, op->args, op->shape);
                 grad_set = true;
             }
-            return left;
+            // should be modified later for index transformation
+            // before: args, transformed: new_args
+            std::vector<Expr> new_args;
+            for (auto arg : left.as<Var>()->args) {
+                new_args.push_back(mutate(arg));
+            }
+            return Var::make(left.as<Var>()->type(), left.as<Var>()->name, 
+                new_args, left.as<Var>()->shape);
         } else {
             return FloatImm::make(op->type(), 0.0);
         }
