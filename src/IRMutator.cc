@@ -74,18 +74,38 @@ Expr IRMutator::visit(Ref<const Binary> op) {
     Expr res;
     Expr new_a = mutate(op->a);
     Expr new_b = mutate(op->b);
+    bool zero_flag_l = (new_a.node_type() == IRNodeType::FloatImm);
+    bool zero_flag_r = (new_b.node_type() == IRNodeType::FloatImm);
 
     switch(op->op_type){
-        case BinaryOpType::Add: 
+        case BinaryOpType::Add: {
+            if (zero_flag_l && zero_flag_r) {
+                return FloatImm::make(op->type(), 0.0);
+            } else if (zero_flag_l) {
+                res = new_b;
+            } else if (zero_flag_r) {
+                res = new_a;
+            } else {
+                res = Binary::make(op->type(), op->op_type, new_a, new_b);
+            }
+            break;
+        }
         case BinaryOpType::Sub: {
-            res = Binary::make(op->type(), op->op_type, new_a, new_b);
+            if (zero_flag_l && zero_flag_r) {
+                return FloatImm::make(op->type(), 0.0);
+            } else if (zero_flag_l) {
+                res = Unary::make(op->type(), UnaryOpType::Neg, new_b);
+            } else if (zero_flag_r) {
+                res = new_a;
+            } else {
+                res = Binary::make(op->type(), op->op_type, new_a, new_b);
+            }
             break;
         }
         case BinaryOpType::Mul: {
             Expr item1 = Binary::make(op->type(), op->op_type, new_a, op->b);
             Expr item2 = Binary::make(op->type(), op->op_type, op->a, new_b);
-            bool zero_flag_l = (new_a.node_type() == IRNodeType::FloatImm);
-            bool zero_flag_r = (new_b.node_type() == IRNodeType::FloatImm);
+            
             if (zero_flag_l && zero_flag_r) {
                 return FloatImm::make(op->type(), 0.0);
             } else if (zero_flag_l) {
@@ -103,10 +123,13 @@ Expr IRMutator::visit(Ref<const Binary> op) {
             Expr divisor = Cast::make(op->type(), op->type(),
                 Binary::make(op->type(), BinaryOpType::Mul, op->b, op->b));
             Expr dividend;
-            if (new_a.node_type() == IRNodeType::FloatImm) {
+            if (zero_flag_l && zero_flag_r) {
+                return FloatImm::make(op->type(), 0.0);
+            } else if (zero_flag_r) {
+                res = Binary::make(op->type(), BinaryOpType::Div, new_a, op->b);
+                break;
+            } else if (zero_flag_l) {
                 dividend = Unary::make(op->type(), UnaryOpType::Neg, item2);
-            } else if (new_b.node_type() == IRNodeType::FloatImm) {
-                dividend = item1;
             } else {
                 dividend = Binary::make(op->type(), BinaryOpType::Sub, item1, item2);
             }
