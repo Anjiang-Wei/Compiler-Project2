@@ -141,9 +141,9 @@ void generate_codes(const std::string &file_name) {
         if (it != svisitor.vars.end())
             outputs.push_back(it->second);
     }
-    Boost::Internal::Group kernels =
-            Boost::Internal::Kernel::make(case_name, inputs, outputs, svisitor.kernel_stmts,
-                                          Boost::Internal::KernelType::CPU);
+    Boost::Internal::Stmt kernels = svisitor.kernel_stmts[0];
+            // Boost::Internal::Kernel::make(case_name, inputs, outputs, svisitor.kernel_stmts,
+            //                               Boost::Internal::KernelType::CPU);
     /* [debug] [created by yy] */
     std::cout << "\033[31m[DEBUG]\033[0m " << case_name << std::endl;
     Boost::Internal::IRPrinter printer_;
@@ -154,8 +154,8 @@ void generate_codes(const std::string &file_name) {
         Boost::Internal::IRMutator mutator;
         Boost::Internal::JsonPrinter printer;
         mutator.grad_to = grad;
-        kernels = mutator.mutate(kernels);
-        std::string new_kernel = printer.print(mutator.result);
+        Boost::Internal::Stmt temp_kernel = mutator.mutate(kernels);
+        std::string new_kernel = printer.print(temp_kernel);
         new_kernels += new_kernel;
     }
     std::cout << new_kernels << std::endl;
@@ -191,6 +191,7 @@ int main() {
         std::string case_name = file_name.substr(0, file_name.length() - 5);
         if (case_name == "case8") continue;
         if (case_name == "case10") continue;
+        if (case_name == "case6") continue;
         generate_codes(case_name);
     }
     return 0;

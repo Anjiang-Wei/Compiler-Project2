@@ -1,11 +1,11 @@
 #include "../run2.h"
 
-void grad_case3(float (&A)[4][16], float (&B)[16][16], float (&dC)[4][16],float (&dA)[4][16]) {
+void grad_case3(float (&B)[16][16], float (&dC)[4][16],float (&dA)[4][16]) {
 	float _tmp0[4][16] = {0};
 	for (int i = 0; i < 4; ++i) {
 		for (int k = 0; k < 16; ++k) {
 			for (int j = 0; j < 16; ++j) {
-				_tmp0[i][k] = _tmp0[i][k] + (dC[i][j] * B[k][j] + A[i][k] * 0);
+				_tmp0[i][k] = _tmp0[i][k] + (dC[i][j] * B[k][j]);
 			}
 		}
 	}

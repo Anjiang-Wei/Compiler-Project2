@@ -76,6 +76,9 @@ public:
         kernel_stmts.push_back(moveBackLoop);
         curmap++;
 
+        //--------Clear spatial index---------
+        spatial_str.clear(); 
+
         return NULL;
     }
 

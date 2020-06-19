@@ -84,9 +84,13 @@ Expr IRMutator::visit(Ref<const Binary> op) {
         case BinaryOpType::Mul: {
             Expr item1 = Binary::make(op->type(), op->op_type, new_a, op->b);
             Expr item2 = Binary::make(op->type(), op->op_type, op->a, new_b);
-            if (new_a.node_type() == IRNodeType::FloatImm) {
+            bool zero_flag_l = (new_a.node_type() == IRNodeType::FloatImm);
+            bool zero_flag_r = (new_b.node_type() == IRNodeType::FloatImm);
+            if (zero_flag_l && zero_flag_r) {
+                return FloatImm::make(op->type(), 0.0);
+            } else if (zero_flag_l) {
                 res = item2;
-            } else if (new_b.node_type() == IRNodeType::FloatImm) {
+            } else if (zero_flag_r) {
                 res = item1;
             } else {
                 res = Binary::make(op->type(), BinaryOpType::Add, item1, item2);
