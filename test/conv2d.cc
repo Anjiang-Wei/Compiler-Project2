@@ -89,8 +89,8 @@ int main() {
     kernel.visit_group(&visitor);
 
     // mutator
-    IRMutator mutator;
-    kernel = mutator.mutate(kernel);
+    // IRMutator mutator;
+    // kernel = mutator.mutate(kernel);
 
     // printer
     IRPrinter printer;
