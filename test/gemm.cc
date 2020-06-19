@@ -66,20 +66,19 @@ int main() {
     IRVisitor visitor;
     kernel.visit_group(&visitor);
 
-    // mutator
-    IRMutator mutator;
-    mutator.grad_to = "B";
-    kernel = mutator.mutate(kernel);
-
-
     // printer
     IRPrinter printer;
     std::string code = printer.print(kernel);
 
     std::cout << code;
+
+    // mutator
+    IRMutator mutator;
+    mutator.grad_to = "B";
+    kernel = mutator.mutate(kernel);  
      
     JsonPrinter printer1;
-    std::cout << printer1.print(mutator.result) << "\n";
+    std::cout << printer1.print(kernel) << "\n";
 
     // JsonPrinter printer2;
     // std::cout << printer2.print(mutator.op2_grad) << "\n";
