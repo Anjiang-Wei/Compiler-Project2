@@ -84,15 +84,29 @@ Expr IRMutator::visit(Ref<const Binary> op) {
         case BinaryOpType::Mul: {
             Expr item1 = Binary::make(op->type(), op->op_type, new_a, op->b);
             Expr item2 = Binary::make(op->type(), op->op_type, op->a, new_b);
-            res = Binary::make(op->type(), BinaryOpType::Add, item1, item2);
+            if (new_a.node_type() == IRNodeType::FloatImm) {
+                res = item2;
+            } else if (new_b.node_type() == IRNodeType::FloatImm) {
+                res = item1;
+            } else {
+                res = Binary::make(op->type(), BinaryOpType::Add, item1, item2);
+            }
             break;
         }
         case BinaryOpType::Div: {
             Expr item1 = Binary::make(op->type(), BinaryOpType::Mul, new_a, op->b);
             Expr item2 = Binary::make(op->type(), BinaryOpType::Mul, op->a, new_b);
-            Expr divisor = Binary::make(op->type(), BinaryOpType::Mul, op->b, op->b);
-            Expr up = Binary::make(op->type(), BinaryOpType::Sub, item1, item2);
-            res = Binary::make(op->type(), BinaryOpType::Div, up, divisor);
+            Expr divisor = Cast::make(op->type(), op->type(),
+                Binary::make(op->type(), BinaryOpType::Mul, op->b, op->b));
+            Expr dividend;
+            if (new_a.node_type() == IRNodeType::FloatImm) {
+                dividend = Unary::make(op->type(), UnaryOpType::Neg, item2);
+            } else if (new_b.node_type() == IRNodeType::FloatImm) {
+                dividend = item1;
+            } else {
+                dividend = Binary::make(op->type(), BinaryOpType::Sub, item1, item2);
+            }
+            res = Binary::make(op->type(), BinaryOpType::Div, dividend, divisor);
             break;
         }
         default: {

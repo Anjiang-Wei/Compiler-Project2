@@ -50,7 +50,7 @@ int main() {
     // main stmt
     Stmt main_stmt = Move::make(
         expr_A,
-        Binary::make(data_type, BinaryOpType::Mul, 
+        Binary::make(data_type, BinaryOpType::Div, 
             Binary::make(data_type, BinaryOpType::Mul, expr_B, expr_C),
             expr_D),
         MoveType::MemToMem
