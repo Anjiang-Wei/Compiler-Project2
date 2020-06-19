@@ -170,12 +170,39 @@ Expr IRMutator::visit(Ref<const Ramp> op) {
 
 
 Expr IRMutator::visit(Ref<const Var> op) {
+    std::cout << "-----------" << std::endl;
+    std::cout << op->name << std::endl;
+    std::cout << "args is below" << std::endl;    
+    for (auto args: op->args) {
+        IRPrinter printer;
+        std::string code = printer.print(args);
+        if (args.node_type()== IRNodeType::FloatImm) {
+            std::cout << "float type: ";
+        }
+        else if (args.node_type() == IRNodeType::Binary) {
+            std::cout << "binary type: ";
+            std::cout << (short)args.as<Binary>()->a.node_type();//a.as<Index>()->name;
+            std::cout << (short)args.as<Binary>()->b.node_type();
+        }
+        else if (args.node_type() == IRNodeType::Index) {
+            std:: cout << "index type: ";
+        }
+        else {
+            std:: cout << "unknown type " << (short)args.node_type() << ":";
+        }
+        std::cout << code << ", ";
+    }
+    std:: cout << std::endl;
+    std::cout << "----------------" << std::endl;
+
     if (is_left) {
+        std::cout << "is_left: " << op->name << '\n';
         left = Var::make(op->type(), "d" + op->name, op->args, op->shape);
         set_left = true;
     } else if (set_left) {
         if (op->name == grad_to) {
             if (!grad_set) {
+                std::cout << "grad_set: " << op->name << '\n';
                 // should rename args later
                 grad = Var::make(op->type(), "d" + op->name, op->args, op->shape);
                 grad_set = true;
@@ -186,12 +213,15 @@ Expr IRMutator::visit(Ref<const Var> op) {
             for (auto arg : left.as<Var>()->args) {
                 new_args.push_back(mutate(arg));
             }
+            std::cout << "----------!!!hey guys! Mutate here!!!!!for" << left.as<Var>()->name << '\n';
             return Var::make(left.as<Var>()->type(), left.as<Var>()->name, 
                 new_args, left.as<Var>()->shape);
         } else {
+            std:: cout << "!!not grad to!!" << op->name << '\n';
             return FloatImm::make(op->type(), 0.0);
         }
     } 
+    std::cout << "----------Can any one reach here?----------" << "\n";
     return Var::make(op->type(), op->name, op->args, op->shape);   
 }
 
