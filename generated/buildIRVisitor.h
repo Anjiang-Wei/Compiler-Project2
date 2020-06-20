@@ -128,7 +128,6 @@ public:
             }
             expr_idx.clear();
             text_idx.clear();
-            idx_exact_bound.clear();
             Stmt finalNode;
             Stmt innerLoop;
             // Build the `IfThenElse` stmt when there is expression in index to judge whether
@@ -161,6 +160,7 @@ public:
             loop_stmts.push_back(innerLoop);
             reduce_idx.clear();
             reduce_str.clear();
+            idx_exact_bound.clear();
             std::pair<std::string, Expr> op_pair = ctx->children[1]->accept(this);
 
             // [added by yy] [question] Maybe just a placeholder?
