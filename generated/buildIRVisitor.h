@@ -128,6 +128,7 @@ public:
             }
             expr_idx.clear();
             text_idx.clear();
+            idx_exact_bound.clear();
             Stmt finalNode;
             Stmt innerLoop;
             // Build the `IfThenElse` stmt when there is expression in index to judge whether

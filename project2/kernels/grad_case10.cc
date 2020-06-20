@@ -18,14 +18,14 @@ void grad_case10(float (&dA)[8][8],float (&dB)[10][8]) {
 			} else {
 			}
 			if (j < 8 && j >= 0) {
-				if (i - 1 < 10 && i - 1 >= 0) {
+				if (i - 1 < 8 && i - 1 >= 0) {
 					_tmp0[i][j] = _tmp0[i][j] + dA[i - 1][j] / 3;
 				} else {
 				}
 			} else {
 			}
 			if (j < 8 && j >= 0) {
-				if (i - 2 < 10 && i - 2 >= 0) {
+				if (i - 2 < 8 && i - 2 >= 0) {
 					_tmp0[i][j] = _tmp0[i][j] + dA[i - 2][j] / 3;
 				} else {
 				}
