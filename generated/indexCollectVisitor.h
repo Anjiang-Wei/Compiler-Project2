@@ -75,6 +75,7 @@ public:
         for (size_t i = 0; i < n; i++) {
             auto it = tmpMap.find(names[i]);
             if (it != tmpMap.end()) {
+                /* [commented by yy] [use for project2]
                 int v = (it->second).as<Index>()->dom.as<Dom>()->extent.as<IntImm>()->value();
                 if (v > bounds[i]) {
                     Boost::Internal::Expr dom =
@@ -83,7 +84,7 @@ public:
                             Boost::Internal::Index::make(index_type, names[i], dom,
                                                          Boost::Internal::IndexType::Spatial);
                     tmpMap[names[i]] = idx;
-                }
+                } */
                 continue;
             }
             // std::cout << names[i] << ' ' << bounds[i] << '\n';

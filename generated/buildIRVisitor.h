@@ -30,6 +30,7 @@ public:
     std::vector<Stmt> loop_stmts; // inner loops
     std::vector<Stmt> kernel_stmts; // outer loops
     Expr tmpVar; // dest for move stmts
+    std::vector<size_t> idx_exact_bound;
 
     // used for inner loops
     std::string outside_op = "+";
@@ -77,7 +78,7 @@ public:
         curmap++;
 
         //--------Clear spatial index---------
-        spatial_str.clear(); 
+        spatial_str.clear();
 
         return NULL;
     }
@@ -117,10 +118,13 @@ public:
             // the item in `expr_idx` and `text_idx` should match
             assert(expr_idx.size() == text_idx.size());
             for (size_t i = 0; i < expr_idx.size(); ++i) {
+                /* [commented by yy] [use for project2]
                 if (expr_idx[i].node_type() == IRNodeType::Binary) {
                     reduce_expr_idx.push_back(expr_idx[i]);
                     reduce_text_idx.push_back(text_idx[i]);
-                }
+                }*/
+                reduce_expr_idx.push_back(expr_idx[i]);
+                reduce_text_idx.push_back(text_idx[i]);
             }
             expr_idx.clear();
             text_idx.clear();
@@ -129,8 +133,13 @@ public:
             // Build the `IfThenElse` stmt when there is expression in index to judge whether
             // the index is out of range.
             for (size_t i = 0; i < reduce_expr_idx.size(); ++i) {
+                /* [commented by yy] [use for project 2]
                 Expr upper = indexes[curmap][reduce_text_idx[i]].as<Index>()->dom.as<Dom>()->extent;
                 Expr lower = indexes[curmap][reduce_text_idx[i]].as<Index>()->dom.as<Dom>()->begin;
+                */
+                Expr dom = Dom::make(Boost::Internal::Type::int_scalar(32), 0, (int)idx_exact_bound[i]);
+                Expr upper = dom.as<Dom>()->extent;
+                Expr lower = dom.as<Dom>()->begin;
                 Expr cmpNode_U =
                         Compare::make(data_type, CompareOpType::LT, reduce_expr_idx[i], upper);
                 Expr cmpNode_B =
@@ -206,8 +215,12 @@ public:
         visitChildren(ctx);
         std::string name = ctx->ID()->getText();
         Expr var = Var::make(data_type, name, idx, shape);
+        int i = 0;
+        assert(shape.size() == idx.size());
         for (const auto &item : idx) {
+            idx_exact_bound.push_back(shape[i]);
             expr_idx.push_back(item);
+            ++i;
         }
         idx.clear();
         shape.clear();
