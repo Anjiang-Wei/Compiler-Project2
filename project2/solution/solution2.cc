@@ -190,7 +190,7 @@ int main() {
     for (const auto &file_name: file_names) {
         std::string case_name = file_name.substr(0, file_name.length() - 5);
         if (case_name == "case8") continue;
-        if (case_name == "case10") continue;
+        //if (case_name == "case10") continue;
         if (case_name == "case6") continue;
         generate_codes(case_name);
     }

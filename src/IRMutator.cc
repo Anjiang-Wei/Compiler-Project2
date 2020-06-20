@@ -71,65 +71,105 @@ Expr IRMutator::visit(Ref<const Unary> op) {
 
 
 Expr IRMutator::visit(Ref<const Binary> op) {
-    Expr res;
-    Expr new_a = mutate(op->a);
-    Expr new_b = mutate(op->b);
-    bool zero_flag_l = (new_a.node_type() == IRNodeType::FloatImm);
-    bool zero_flag_r = (new_b.node_type() == IRNodeType::FloatImm);
+    if (index_tranform == true) {
+        Expr res;
+        switch (op->op_type) {
+            //Equation z = index_i + const_a Or z = const_a + index_i has solution:
+            //index_i = z - const_a
+            case BinaryOpType::Add: {
+                if (op->a->node_type() == IRNodeType::Index && op->b->node_type() == IRNodeType::IntImm) {
+                    res = Binary::make(op->type(), BinaryOpType::Sub, op->a, op->b);
+                    return Cast::make(res->type(), res->type(), res);
+                }
+                if (op->a->node_type() == IRNodeType::IntImm && op->b->node_type() == IRNodeType::Index) {
+                    res = Binary::make(op->type(), BinaryOpType::Sub, op->b, op->a);
+                    return Cast::make(res->type(), res->type(), res);
+                }
+            }
+            //Equation z = index_i - const_a has solution:
+            //index_i = z + const_a
+            case BinaryOpType::Sub: {
+                if (op->a->node_type() == IRNodeType::Index && op->b->node_type() == IRNodeType::IntImm) {
+                    res = Binary::make(op->type(), BinaryOpType::Add, op->a, op->b);
+                    return Cast::make(res->type(), res->type(), res);
+                }
+            }
+            //Equation z0 = index_i //const_a, z1 = index_i % const_a has solution:
+            //index_i = z0 * const_a + z1
+            case BinaryOpType::Mod: {
+                if (op->a->node_type() == IRNodeType::Index && op->b->node_type() == IRNodeType::IntImm) {
 
-    switch(op->op_type){
-        case BinaryOpType::Add:
-        case BinaryOpType::Sub: {
-            if (zero_flag_l && zero_flag_r) {
-                return FloatImm::make(op->type(), 0.0);
-            } else if (zero_flag_l) {
-                res = (op->op_type == BinaryOpType::Sub) ? 
-                    Unary::make(op->type(), UnaryOpType::Neg, new_b): new_b;
-            } else if (zero_flag_r) {
-                res = new_a;
-            } else {
-                res = Binary::make(op->type(), op->op_type, new_a, new_b);
+                }
             }
-            break;
-        }
-        case BinaryOpType::Mul: {
-            Expr item1 = Binary::make(op->type(), op->op_type, new_a, op->b);
-            Expr item2 = Binary::make(op->type(), op->op_type, op->a, new_b);
-            
-            if (zero_flag_l && zero_flag_r) {
-                return FloatImm::make(op->type(), 0.0);
-            } else if (zero_flag_l) {
-                res = item2;
-            } else if (zero_flag_r) {
-                res = item1;
-            } else {
-                res = Binary::make(op->type(), BinaryOpType::Add, item1, item2);
+            case BinaryOpType::Div: {
+                if (op->a->node_type() == IRNodeType::Index && op->b->node_type() == IRNodeType::IntImm) {
+
+                }
             }
-            break;
-        }
-        case BinaryOpType::Div: {
-            Expr item1 = Binary::make(op->type(), BinaryOpType::Mul, new_a, op->b);
-            Expr item2 = Binary::make(op->type(), BinaryOpType::Mul, op->a, new_b);
-            Expr divisor = Cast::make(op->type(), op->type(),
-                Binary::make(op->type(), BinaryOpType::Mul, op->b, op->b));
-            Expr dividend;
-            if (zero_flag_l && zero_flag_r) {
-                return FloatImm::make(op->type(), 0.0);
-            } else if (zero_flag_r) {
-                res = Binary::make(op->type(), BinaryOpType::Div, new_a, op->b);
-                break;
-            } else if (zero_flag_l) {
-                dividend = Unary::make(op->type(), UnaryOpType::Neg, item2);
-            } else {
-                dividend = Binary::make(op->type(), BinaryOpType::Sub, item1, item2);
-            }
-            res = Binary::make(op->type(), BinaryOpType::Div, dividend, divisor);
-            break;
-        }
-        default: {
         }
     }
-    return Cast::make(res->type(), res->type(), res);
+    else 
+    {
+        Expr res;
+        Expr new_a = mutate(op->a);
+        Expr new_b = mutate(op->b);
+        bool zero_flag_l = (new_a.node_type() == IRNodeType::FloatImm);
+        bool zero_flag_r = (new_b.node_type() == IRNodeType::FloatImm);
+
+        switch(op->op_type){
+            case BinaryOpType::Add:
+            case BinaryOpType::Sub: {
+                if (zero_flag_l && zero_flag_r) {
+                    return FloatImm::make(op->type(), 0.0);
+                } else if (zero_flag_l) {
+                    res = (op->op_type == BinaryOpType::Sub) ? 
+                        Unary::make(op->type(), UnaryOpType::Neg, new_b): new_b;
+                } else if (zero_flag_r) {
+                    res = new_a;
+                } else {
+                    res = Binary::make(op->type(), op->op_type, new_a, new_b);
+                }
+                break;
+            }
+            case BinaryOpType::Mul: {
+                Expr item1 = Binary::make(op->type(), op->op_type, new_a, op->b);
+                Expr item2 = Binary::make(op->type(), op->op_type, op->a, new_b);
+                
+                if (zero_flag_l && zero_flag_r) {
+                    return FloatImm::make(op->type(), 0.0);
+                } else if (zero_flag_l) {
+                    res = item2;
+                } else if (zero_flag_r) {
+                    res = item1;
+                } else {
+                    res = Binary::make(op->type(), BinaryOpType::Add, item1, item2);
+                }
+                break;
+            }
+            case BinaryOpType::Div: {
+                Expr item1 = Binary::make(op->type(), BinaryOpType::Mul, new_a, op->b);
+                Expr item2 = Binary::make(op->type(), BinaryOpType::Mul, op->a, new_b);
+                Expr divisor = Cast::make(op->type(), op->type(),
+                    Binary::make(op->type(), BinaryOpType::Mul, op->b, op->b));
+                Expr dividend;
+                if (zero_flag_l && zero_flag_r) {
+                    return FloatImm::make(op->type(), 0.0);
+                } else if (zero_flag_r) {
+                    res = Binary::make(op->type(), BinaryOpType::Div, new_a, op->b);
+                    break;
+                } else if (zero_flag_l) {
+                    dividend = Unary::make(op->type(), UnaryOpType::Neg, item2);
+                } else {
+                    dividend = Binary::make(op->type(), BinaryOpType::Sub, item1, item2);
+                }
+                res = Binary::make(op->type(), BinaryOpType::Div, dividend, divisor);
+                break;
+            }
+            default: {
+            }
+        }
+        return Cast::make(res->type(), res->type(), res);
+    }
 }
 
 
@@ -172,34 +212,35 @@ Expr IRMutator::visit(Ref<const Ramp> op) {
 Expr IRMutator::visit(Ref<const Var> op) {
     std::cout << "-----------" << std::endl;
     std::cout << op->name << std::endl;
-    std::cout << "args is below" << std::endl;    
-    for (auto args: op->args) {
-        IRPrinter printer;
-        std::string code = printer.print(args);
-        if (args.node_type()== IRNodeType::FloatImm) {
-            std::cout << "float type: ";
-        }
-        else if (args.node_type() == IRNodeType::Binary) {
-            std::cout << "binary type: ";
-            std::cout << (short)args.as<Binary>()->a.node_type();//a.as<Index>()->name;
-            std::cout << (short)args.as<Binary>()->b.node_type();
-        }
-        else if (args.node_type() == IRNodeType::Index) {
-            std:: cout << "index type: ";
-        }
-        else {
-            std:: cout << "unknown type " << (short)args.node_type() << ":";
-        }
-        std::cout << code << ", ";
-    }
-    std:: cout << std::endl;
-    std::cout << "----------------" << std::endl;
+    // std::cout << "args is below" << std::endl;    
+    // for (auto args: op->args) {
+    //     IRPrinter printer;
+    //     std::string code = printer.print(args);
+    //     if (args.node_type()== IRNodeType::FloatImm) {
+    //         std::cout << "float type: ";
+    //     }
+    //     else if (args.node_type() == IRNodeType::Binary) {
+    //         std::cout << "binary type: ";
+    //         std::cout << (short)args.as<Binary>()->a.node_type();//a.as<Index>()->name;
+    //         std::cout << (short)args.as<Binary>()->b.node_type();
+    //     }
+    //     else if (args.node_type() == IRNodeType::Index) {
+    //         std:: cout << "index type: ";
+    //     }
+    //     else {
+    //         std:: cout << "unknown type " << (short)args.node_type() << ":";
+    //     }
+    //     std::cout << code << ", ";
+    // }
+    // std:: cout << std::endl;
+    // std::cout << "----------------" << std::endl;
 
     if (is_left) {
         std::cout << "is_left: " << op->name << '\n';
         left = Var::make(op->type(), "d" + op->name, op->args, op->shape);
         set_left = true;
-    } else if (set_left) {
+    } 
+    else if (set_left) {
         if (op->name == grad_to) {
             if (!grad_set) {
                 std::cout << "grad_set: " << op->name << '\n';
@@ -210,13 +251,36 @@ Expr IRMutator::visit(Ref<const Var> op) {
             // should be modified later for index transformation
             // before: args, transformed: new_args
             std::vector<Expr> new_args;
-            for (auto arg : left.as<Var>()->args) {
-                new_args.push_back(mutate(arg));
+            for (auto args: op->args) {
+                if (args.node_type() == IRNodeType::Binary) {
+                    std::cout << "binary type: ";
+                    index_tranform = true;
+                }
+                else if (args.node_type() == IRNodeType::Index) {
+                    std:: cout << "index type: ";
+                }
+                else {
+                    std:: cout << "unknown type " << (short)args.node_type() << ":";
+                }
             }
-            std::cout << "----------!!!hey guys! Mutate here!!!!!for" << left.as<Var>()->name << '\n';
+            if (index_tranform == true) {
+                for (auto args: op->args) {
+                    new_args.push_back(mutate(args));
+                }
+            }
+            else {
+                for (auto arg : left.as<Var>()->args) {
+                    new_args.push_back(mutate(arg));
+                }
+            }
+            
+            index_tranform = false;
+            std::cout << "----------!!!hey guys! Mutate here!!!!!for " << left.as<Var>()->name << '\n';
             return Var::make(left.as<Var>()->type(), left.as<Var>()->name, 
                 new_args, left.as<Var>()->shape);
-        } else {
+        } 
+        else 
+        {
             std:: cout << "!!not grad to!!" << op->name << '\n';
             return FloatImm::make(op->type(), 0.0);
         }

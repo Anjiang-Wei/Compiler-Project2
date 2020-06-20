@@ -66,6 +66,7 @@ class IRMutator {
     bool set_left = false;
     bool grad_set = false;
     // bool is_op1 = true;
+    bool index_tranform = false;
  private:
 };
 
