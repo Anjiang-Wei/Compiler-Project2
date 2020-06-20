@@ -4,13 +4,7 @@ void kernel_additional_case18(int (&B)[10][10], int (&C)[9][64], int &scalar,int
 	int _tmp0[8][6] = {0};
 	for (int i = 0; i < 8; ++i) {
 		for (int j = 0; j < 6; ++j) {
-			if (j < 6 && j >= 0) {
-				if (i < 8 && i >= 0) {
-					_tmp0[i][j] = _tmp0[i][j] + 0;
-				} else {
-				}
-			} else {
-			}
+			_tmp0[i][j] = _tmp0[i][j] + 0;
 		}
 	}
 	for (int i = 0; i < 8; ++i) {
@@ -27,13 +21,7 @@ void kernel_additional_case18(int (&B)[10][10], int (&C)[9][64], int &scalar,int
 						if (i + 1 < 10 && i + 1 >= 0) {
 							if (j < 10 && j >= 0) {
 								if (i < 10 && i >= 0) {
-									if (j < 6 && j >= 0) {
-										if (i < 8 && i >= 0) {
-											_tmp1[i][j] = _tmp1[i][j] + (B[i][j] + B[i + 1][j] + C[i + 2][j * j]) % scalar;
-										} else {
-										}
-									} else {
-									}
+									_tmp1[i][j] = _tmp1[i][j] + (B[i][j] + B[i + 1][j] + C[i + 2][j * j]) % scalar;
 								} else {
 								}
 							} else {

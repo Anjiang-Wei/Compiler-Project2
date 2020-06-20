@@ -10,13 +10,7 @@ void kernel_case10(float (&B)[10][10],float (&A)[8][8]) {
 						if (i + 1 < 10 && i + 1 >= 0) {
 							if (j < 10 && j >= 0) {
 								if (i < 10 && i >= 0) {
-									if (j < 8 && j >= 0) {
-										if (i < 8 && i >= 0) {
-											_tmp0[i][j] = _tmp0[i][j] + (B[i][j] + B[i + 1][j] + B[i + 2][j]) / 3;
-										} else {
-										}
-									} else {
-									}
+									_tmp0[i][j] = _tmp0[i][j] + (B[i][j] + B[i + 1][j] + B[i + 2][j]) / 3;
 								} else {
 								}
 							} else {

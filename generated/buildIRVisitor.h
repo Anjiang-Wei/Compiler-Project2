@@ -115,16 +115,21 @@ public:
             // Find the expression in the indexes;
             std::vector<Expr> reduce_expr_idx;
             std::vector<std::string> reduce_text_idx;
+            std::vector<size_t> reduce_exact_bound;
             // the item in `expr_idx` and `text_idx` should match
             assert(expr_idx.size() == text_idx.size());
             for (size_t i = 0; i < expr_idx.size(); ++i) {
-                /* [commented by yy] [use for project2]
-                if (expr_idx[i].node_type() == IRNodeType::Binary) {
-                    reduce_expr_idx.push_back(expr_idx[i]);
-                    reduce_text_idx.push_back(text_idx[i]);
-                }*/
+                // [commented by yy] [use for project2]
+                if (expr_idx[i].node_type() == IRNodeType::Index) {
+                    if (expr_idx[i].as<Index>()->dom.as<Dom>()->extent.as<IntImm>()->value() 
+                        == idx_exact_bound[i])
+                        continue;
+                }
                 reduce_expr_idx.push_back(expr_idx[i]);
                 reduce_text_idx.push_back(text_idx[i]);
+                reduce_exact_bound.push_back(idx_exact_bound[i]);                             
+                // reduce_expr_idx.push_back(expr_idx[i]);
+                // reduce_text_idx.push_back(text_idx[i]);
             }
             expr_idx.clear();
             text_idx.clear();
@@ -137,7 +142,7 @@ public:
                 Expr upper = indexes[curmap][reduce_text_idx[i]].as<Index>()->dom.as<Dom>()->extent;
                 Expr lower = indexes[curmap][reduce_text_idx[i]].as<Index>()->dom.as<Dom>()->begin;
                 */
-                Expr dom = Dom::make(Boost::Internal::Type::int_scalar(32), 0, (int)idx_exact_bound[i]);
+                Expr dom = Dom::make(Boost::Internal::Type::int_scalar(32), 0, (int)reduce_exact_bound[i]);
                 Expr upper = dom.as<Dom>()->extent;
                 Expr lower = dom.as<Dom>()->begin;
                 Expr cmpNode_U =
