@@ -22,6 +22,7 @@
  * SOFTWARE.
 */
 
+#include "assert.h"
 #include "IRMutator.h"
 #include "IRPrinter.h"
 
@@ -69,6 +70,22 @@ Expr IRMutator::visit(Ref<const Unary> op) {
     return Unary::make(op->type(), op->op_type, new_a);
 }
 
+Expr distribute_divisor(Expr a, Expr b) {
+    if (a.node_type() == IRNodeType::Cast) {
+        return distribute_divisor(a.as<Cast>()->val, b);
+    } else if (a.node_type() == IRNodeType::Binary) {
+        switch(a.as<Binary>()->op_type) {
+            case BinaryOpType::Add: 
+            case BinaryOpType::Sub: {
+                Expr new_a = distribute_divisor(a.as<Binary>()->a, b);
+                Expr new_b = distribute_divisor(a.as<Binary>()->b, b);
+                return Binary::make(a.type(), a.as<Binary>()->op_type, new_a, new_b);
+            }
+            default: {}
+        }
+    }
+    return Binary::make(a.type(), BinaryOpType::Div, a, b);
+}
 
 Expr IRMutator::visit(Ref<const Binary> op) {
     if (index_tranform == true) {
@@ -79,11 +96,11 @@ Expr IRMutator::visit(Ref<const Binary> op) {
             case BinaryOpType::Add: {
                 if (op->a->node_type() == IRNodeType::Index && op->b->node_type() == IRNodeType::IntImm) {
                     res = Binary::make(op->type(), BinaryOpType::Sub, op->a, op->b);
-                    return Cast::make(res->type(), res->type(), res);
+                    return res;
                 }
                 if (op->a->node_type() == IRNodeType::IntImm && op->b->node_type() == IRNodeType::Index) {
                     res = Binary::make(op->type(), BinaryOpType::Sub, op->b, op->a);
-                    return Cast::make(res->type(), res->type(), res);
+                    return res;
                 }
             }
             //Equation z = index_i - const_a has solution:
@@ -155,7 +172,8 @@ Expr IRMutator::visit(Ref<const Binary> op) {
                 if (zero_flag_l && zero_flag_r) {
                     return FloatImm::make(op->type(), 0.0);
                 } else if (zero_flag_r) {
-                    res = Binary::make(op->type(), BinaryOpType::Div, new_a, op->b);
+                    res = distribute_divisor(new_a, op->b);
+                    // res = Binary::make(op->type(), BinaryOpType::Div, new_a, op->b);
                     break;
                 } else if (zero_flag_l) {
                     dividend = Unary::make(op->type(), UnaryOpType::Neg, item2);
@@ -168,7 +186,7 @@ Expr IRMutator::visit(Ref<const Binary> op) {
             default: {
             }
         }
-        return Cast::make(res->type(), res->type(), res);
+        return res;
     }
 }
 
