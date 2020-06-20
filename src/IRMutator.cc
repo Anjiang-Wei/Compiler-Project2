@@ -24,6 +24,7 @@
 
 #include "IRMutator.h"
 #include "IRPrinter.h"
+#include "string.h"
 
 namespace Boost {
 
@@ -97,14 +98,30 @@ Expr IRMutator::visit(Ref<const Binary> op) {
             //Equation z0 = index_i //const_a, z1 = index_i % const_a has solution:
             //index_i = z0 * const_a + z1
             case BinaryOpType::Mod: {
+                std::cout << "Inside Mod\n";
                 if (op->a->node_type() == IRNodeType::Index && op->b->node_type() == IRNodeType::IntImm) {
-
+                    DivMode = true;
+                    if (DivModInt != -1 && DivModInt != op->b.as<IntImm>()->value()) {
+                        std::cout << "Cannot handle this kind of case now!";
+                    }
+                    DivModInt = op->b.as<IntImm>()->value();
+                    res = Binary::make(op->type(), BinaryOpType::Mod, op->a, op->b);
+                    return Cast::make(res->type(), res->type(), res);
                 }
             }
             case BinaryOpType::Div: {
+                std::cout << "Inside Div\n";
                 if (op->a->node_type() == IRNodeType::Index && op->b->node_type() == IRNodeType::IntImm) {
-
+                    DivMode = true;
+                    if (DivModInt != -1 && DivModInt != op->b.as<IntImm>()->value()) {
+                        std::cout << "Cannot handle this kind of case now!";
+                    }
+                    DivModInt = op->b.as<IntImm>()->value();
+                    res = Binary::make(op->type(), BinaryOpType::Div, op->a, op->b);
+                    return Cast::make(res->type(), res->type(), res);
                 }
+            }
+            default:{
             }
         }
     }
@@ -212,28 +229,28 @@ Expr IRMutator::visit(Ref<const Ramp> op) {
 Expr IRMutator::visit(Ref<const Var> op) {
     std::cout << "-----------" << std::endl;
     std::cout << op->name << std::endl;
-    // std::cout << "args is below" << std::endl;    
-    // for (auto args: op->args) {
-    //     IRPrinter printer;
-    //     std::string code = printer.print(args);
-    //     if (args.node_type()== IRNodeType::FloatImm) {
-    //         std::cout << "float type: ";
-    //     }
-    //     else if (args.node_type() == IRNodeType::Binary) {
-    //         std::cout << "binary type: ";
-    //         std::cout << (short)args.as<Binary>()->a.node_type();//a.as<Index>()->name;
-    //         std::cout << (short)args.as<Binary>()->b.node_type();
-    //     }
-    //     else if (args.node_type() == IRNodeType::Index) {
-    //         std:: cout << "index type: ";
-    //     }
-    //     else {
-    //         std:: cout << "unknown type " << (short)args.node_type() << ":";
-    //     }
-    //     std::cout << code << ", ";
-    // }
-    // std:: cout << std::endl;
-    // std::cout << "----------------" << std::endl;
+    std::cout << "args is below" << std::endl;    
+    for (auto args: op->args) {
+        IRPrinter printer;
+        std::string code = printer.print(args);
+        if (args.node_type()== IRNodeType::FloatImm) {
+            std::cout << "float type: ";
+        }
+        else if (args.node_type() == IRNodeType::Binary) {
+            std::cout << "binary type: ";
+            std::cout << (short)args.as<Binary>()->a.node_type();//a.as<Index>()->name;
+            std::cout << (short)args.as<Binary>()->b.node_type();
+        }
+        else if (args.node_type() == IRNodeType::Index) {
+            std:: cout << "index type: ";
+        }
+        else {
+            std:: cout << "unknown type " << (short)args.node_type() << ":";
+        }
+        std::cout << code << ", ";
+    }
+    std:: cout << std::endl;
+    std::cout << "----------------" << std::endl;
 
     if (is_left) {
         std::cout << "is_left: " << op->name << '\n';
@@ -242,15 +259,36 @@ Expr IRMutator::visit(Ref<const Var> op) {
     } 
     else if (set_left) {
         if (op->name == grad_to) {
+
             if (!grad_set) {
                 std::cout << "grad_set: " << op->name << '\n';
-                // should rename args later
-                grad = Var::make(op->type(), "d" + op->name, op->args, op->shape);
+                // should rename args later? For example: p+r, i//16, etc...
+                for (auto args: op->args) {
+                    if (args.node_type() == IRNodeType::Binary) {
+                        should_rename = true;
+                    }
+                }
+                if (should_rename) {
+                    for (auto args: op->args) {
+                        if (args.node_type() == IRNodeType::Binary) {
+                            Type index_type = Type::int_scalar(32);
+                            Expr dom_n = Dom::make(index_type, -100, 100);
+                            Expr renamed_expr = Index::make(index_type, "z" + std::to_string(rename_num), dom_n, IndexType::Spatial);
+                            rename_num += 1;
+                            rename_args.push_back(renamed_expr);
+                        }
+                        else {
+                            rename_args.push_back(args);
+                        }
+                    }
+                    grad = Var::make(op->type(), "d" + op->name, rename_args, op->shape);
+                } 
+                else {
+                    grad = Var::make(op->type(), "d" + op->name, op->args, op->shape);
+                }
                 grad_set = true;
             }
-            // should be modified later for index transformation
-            // before: args, transformed: new_args
-            std::vector<Expr> new_args;
+
             for (auto args: op->args) {
                 if (args.node_type() == IRNodeType::Binary) {
                     std::cout << "binary type: ";
@@ -263,6 +301,10 @@ Expr IRMutator::visit(Ref<const Var> op) {
                     std:: cout << "unknown type " << (short)args.node_type() << ":";
                 }
             }
+
+            // should be modified later for index transformation
+            // before: args, transformed: new_args
+            std::vector<Expr> new_args;
             if (index_tranform == true) {
                 for (auto args: op->args) {
                     new_args.push_back(mutate(args));
@@ -273,7 +315,13 @@ Expr IRMutator::visit(Ref<const Var> op) {
                     new_args.push_back(mutate(arg));
                 }
             }
-            
+            if (should_rename) {
+                new_args.clear();
+                for (auto args: left.as<Var>()->args) {
+                    new_args.push_back(mutate(args));
+                }
+            }
+                    
             index_tranform = false;
             std::cout << "----------!!!hey guys! Mutate here!!!!!for " << left.as<Var>()->name << '\n';
             return Var::make(left.as<Var>()->type(), left.as<Var>()->name, 
@@ -299,6 +347,18 @@ Expr IRMutator::visit(Ref<const Dom> op) {
 
 Expr IRMutator::visit(Ref<const Index> op) {
     Expr new_dom = mutate(op->dom);
+    if (should_rename) {
+        if (DivMode == true) {
+            Expr divisor_renamer = rename_args[0];
+            Expr remainder_renamer = rename_args[1];
+            Type index_type = Type::int_scalar(32);
+            Expr DivModInteger = IntImm::make(index_type, DivModInt);
+            Expr tmp_expr = Binary::make(index_type, BinaryOpType::Mul, divisor_renamer, DivModInteger);
+            Expr new_indice = Binary::make(index_type, BinaryOpType::Add, tmp_expr, remainder_renamer);
+            return Cast::make(new_indice->type(), new_indice->type(), new_indice);
+        }
+
+    }
     return Index::make(op->type(), op->name, new_dom, op->index_type);
 }
 

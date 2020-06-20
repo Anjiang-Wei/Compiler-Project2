@@ -67,6 +67,11 @@ class IRMutator {
     bool grad_set = false;
     // bool is_op1 = true;
     bool index_tranform = false;
+    bool should_rename = false;
+    int rename_num = 0;
+    std::vector<Expr> rename_args;
+    bool DivMode = false;
+    int64_t DivModInt= -1;
  private:
 };
 
