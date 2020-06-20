@@ -8,7 +8,13 @@ void kernel_additional_case14(float (&A)[2][2], float (&B)[2][2], float (&D)[2][
 				_tmp0[i][j] = _tmp0[i][j] + (A[i][k] * B[k][j]);
 			}
 			for (int k = 0; k < 2; ++k) {
-				_tmp0[i][j] = _tmp0[i][j] + (D[i][k] * E[k][j]);
+				if (k < 4 && k >= 0) {
+					if (k < 4 && k >= 0) {
+						_tmp0[i][j] = _tmp0[i][j] + (D[i][k] * E[k][j]);
+					} else {
+					}
+				} else {
+				}
 			}
 		}
 	}

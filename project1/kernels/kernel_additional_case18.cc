@@ -17,8 +17,17 @@ void kernel_additional_case18(int (&B)[10][10], int (&C)[9][64], int &scalar,int
 		for (int j = 0; j < 6; ++j) {
 			if (j * j < 64 && j * j >= 0) {
 				if (i + 2 < 9 && i + 2 >= 0) {
-					if (i + 1 < 10 && i + 1 >= 0) {
-						_tmp1[i][j] = _tmp1[i][j] + (B[i][j] + B[i + 1][j] + C[i + 2][j * j]) % scalar;
+					if (j < 10 && j >= 0) {
+						if (i + 1 < 10 && i + 1 >= 0) {
+							if (j < 10 && j >= 0) {
+								if (i < 10 && i >= 0) {
+									_tmp1[i][j] = _tmp1[i][j] + (B[i][j] + B[i + 1][j] + C[i + 2][j * j]) % scalar;
+								} else {
+								}
+							} else {
+							}
+						} else {
+						}
 					} else {
 					}
 				} else {
