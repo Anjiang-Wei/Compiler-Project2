@@ -26,7 +26,8 @@
 #define BOOST_IRMUTATOR_H
 
 #include "IR.h"
-
+#include "transform.h"
+#include <map>
 
 namespace Boost {
 
@@ -68,10 +69,20 @@ class IRMutator {
     // bool is_op1 = true;
     bool index_tranform = false;
     bool should_rename = false;
+    bool matrix_transform = false;
     int rename_num = 0;
     std::vector<Expr> rename_args;
     bool DivMode = false;
     int64_t DivModInt= -1;
+    //the equation is Y = Matrix * X
+    std::vector<Expr> Y;
+    std::vector<Expr> X;
+    std::vector<int> matrix_add_indice;
+    std::vector<Expr> extUY;
+    std::map<std::string, Expr> indice_replacement;
+    bool enter_indice_replacement = false;
+    void solve();
+    void Print(matrix M);
  private:
 };
 

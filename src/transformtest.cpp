@@ -2,7 +2,7 @@
 #include"transform.h"
 using namespace std;
 #define A_row 4
-#define A_column 7
+#define A_column 6
 void Print(matrix M) {
     for(int i=0;i<M.n_rows;i++) {
         cout<<"row "<<i<<": ";
@@ -14,10 +14,10 @@ void Print(matrix M) {
 }
 
 int main() {
-    int a[] = {1, 0, 0, 0 ,0, 0, 0, 
-               0, 0, 0, 0, 1, 0, 0,
-               0, 0, 1, 0, 0, 1, 0, 
-               0, 0, 0, 1, 0, 0, 1};
+    int a[] = {1, 0, 0, 0, 0, 0,
+               0, 1, 0, 0, 0, 0,
+               0, 0, 1, 1, 0, 0, 
+               0, 0, 0, 0, 1, 1};
     matrix A(A_row,A_column);
     matrix U(A_row,A_row);
     matrix S(A_row,A_column);
