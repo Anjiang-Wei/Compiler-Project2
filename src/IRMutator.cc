@@ -301,30 +301,6 @@ Expr IRMutator::visit(Ref<const Var> op) {
         }
         return Var::make(op->type(), op->name, new_args, op->shape);
     }
-    // std::cout << "-----------" << std::endl;
-    // std::cout << op->name << std::endl;
-    // std::cout << "args is below" << std::endl;    
-    // for (auto args: op->args) {
-    //     IRPrinter printer;
-    //     std::string code = printer.print(args);
-    //     if (args.node_type()== IRNodeType::FloatImm) {
-    //         std::cout << "float type: ";
-    //     }
-    //     else if (args.node_type() == IRNodeType::Binary) {
-    //         std::cout << "binary type: ";
-    //         std::cout << (short)args.as<Binary>()->a.node_type();//a.as<Index>()->name;
-    //         std::cout << (short)args.as<Binary>()->b.node_type();
-    //     }
-    //     else if (args.node_type() == IRNodeType::Index) {
-    //         std:: cout << "index type: ";
-    //     }
-    //     else {
-    //         std:: cout << "unknown type " << (short)args.node_type() << ":";
-    //     }
-    //     std::cout << code << ", ";
-    // }
-    // std:: cout << std::endl;
-    // std::cout << "----------------" << std::endl;
 
     if (is_left) {
         //std::cout << "is_left: " << op->name << '\n';
@@ -335,7 +311,6 @@ Expr IRMutator::visit(Ref<const Var> op) {
         if (op->name == grad_to) {
 
             if (!grad_set) {
-                //std::cout << "grad_set: " << op->name << '\n';
                 // should rename args later? For example: p+r, i//16, etc...
                 for (auto args: op->args) {
                     if (args.node_type() == IRNodeType::Binary) {
@@ -343,7 +318,6 @@ Expr IRMutator::visit(Ref<const Var> op) {
                     }
                 }
                 if (should_rename) {
-                    //std::cout << op->name <<"-------indices should be renamed!!-----------\n";
                     for (auto args: op->args) {
                         if (args.node_type() == IRNodeType::Binary) {
                             Type index_type = Type::int_scalar(32);
@@ -387,15 +361,8 @@ Expr IRMutator::visit(Ref<const Var> op) {
 
             for (auto args: op->args) {
                 if (args.node_type() == IRNodeType::Binary) {
-                    //std::cout << "binary type: ";
                     index_tranform = true;
                 }
-                // else if (args.node_type() == IRNodeType::Index) {
-                //     std:: cout << "index type: ";
-                // }
-                // else {
-                //     std:: cout << "unknown type " << (short)args.node_type() << ":";
-                // }
             }
 
             // should be modified later for index transformation
@@ -419,23 +386,6 @@ Expr IRMutator::visit(Ref<const Var> op) {
             }
                     
             index_tranform = false;
-            // std::cout << "----------!!!hey guys! Mutate here!!!!!for " << left.as<Var>()->name << '\n';
-            // IRPrinter printer;
-            // std::cout << "####X######\n";
-            // for (auto itemX : X) {
-            //     std::string code = printer.print(itemX);
-            //     std::cout << code << ", ";
-            // }
-            // std::cout << "#####Y######\n";
-            // for (auto itemY: Y) {
-            //     std::string code = printer.print(itemY);
-            //     std::cout << code << ", ";
-            // }
-            // std::cout << "###matrix_add_indice";
-            // for (auto integer: matrix_add_indice) {
-            //     std::cout << integer << ", ";
-            // }
-            // std::cout << "-----------------########\n";
             if (matrix_transform)
             {
                 solve();
@@ -444,8 +394,6 @@ Expr IRMutator::visit(Ref<const Var> op) {
                 new_args.clear();
                 IRPrinter printer;
                 for (auto items: left.as<Var>()->args) {
-                    // std::string code = printer.print(items);
-                    // std::cout << code << " ,";
                     new_args.push_back(mutate(items));
                 }
             }
@@ -457,7 +405,6 @@ Expr IRMutator::visit(Ref<const Var> op) {
             return FloatImm::make(op->type(), 0.0);
         }
     } 
-    //std::cout << "----------Can any one reach here?----------" << "\n";
     return Var::make(op->type(), op->name, op->args, op->shape);   
 }
 
@@ -604,14 +551,14 @@ Group IRMutator::visit(Ref<const Kernel> op) {
 
         transform(S,U,V);
         matrix R = U*A*V;
-        std::cout<<"U*A*V="<<std::endl;
-        Print(R);
-        std::cout<<"--------------------"<<std::endl<<"S="<<std::endl;
-        Print(S);
-        std::cout<<"--------------------"<<std::endl<<"U="<<std::endl;
-        Print(U);
-        std::cout<<"--------------------"<<std::endl<<"V="<<std::endl;
-        Print(V);
+        // std::cout<<"U*A*V="<<std::endl;
+        // Print(R);
+        // std::cout<<"--------------------"<<std::endl<<"S="<<std::endl;
+        // Print(S);
+        // std::cout<<"--------------------"<<std::endl<<"U="<<std::endl;
+        // Print(U);
+        // std::cout<<"--------------------"<<std::endl<<"V="<<std::endl;
+        // Print(V);
         extUY.clear();
         //Since U is an identity matrix here
         for (auto item: Y) {
@@ -652,8 +599,6 @@ Group IRMutator::visit(Ref<const Kernel> op) {
                         non_zero_index = j;
                     }
                 }
-                // std::cout << "------------HAHAHAHA!!!!--------------\n";
-                // std::cout << X[i].as<Index>()->name << "is replaced as " << extUY[non_zero_index].as<Index>()->name << "\n";
                 indice_replacement[X[i].as<Index>()->name] = extUY[non_zero_index];
             }
             else {
@@ -673,8 +618,6 @@ Group IRMutator::visit(Ref<const Kernel> op) {
                 Expr tmp_expr = Binary::make(index_type, BinaryOpType::Sub, positive_index, negative_index);
                 IRPrinter printer;
                 std::string code = printer.print(tmp_expr);
-                // std::cout << "------------HAHAHAHA!!!!--------------\n";
-                // std::cout << X[i].as<Index>()->name << " is replaced as " << code << "\n";
                 indice_replacement[X[i].as<Index>()->name] = tmp_expr;
             }
         }
