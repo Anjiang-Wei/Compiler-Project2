@@ -144,10 +144,11 @@ void generate_codes(const std::string &file_name) {
     Boost::Internal::Stmt kernels = svisitor.kernel_stmts[0];
             // Boost::Internal::Kernel::make(case_name, inputs, outputs, svisitor.kernel_stmts,
             //                               Boost::Internal::KernelType::CPU);
-    /* [debug] [created by yy] */
+    /* [debug] [created by yy]
     std::cout << "\033[31m[DEBUG]\033[0m " << case_name << std::endl;
     Boost::Internal::IRPrinter printer_;
     std::cout << printer_.print(kernels) << std::endl;
+     */
 
     std::string new_kernels;
     for (const auto &grad : grad_to) {
@@ -158,7 +159,7 @@ void generate_codes(const std::string &file_name) {
         std::string new_kernel = printer.print(temp_kernel);
         new_kernels += new_kernel;
     }
-    std::cout << new_kernels << std::endl;
+    // std::cout << new_kernels << std::endl;
 
     // ----------Use Project1 to build the final result----------
     std::vector<std::string> new_ins(ins), new_outs;
@@ -189,9 +190,6 @@ int main() {
     get_files(file_names);
     for (const auto &file_name: file_names) {
         std::string case_name = file_name.substr(0, file_name.length() - 5);
-        //if (case_name == "case8") continue;
-        //if (case_name == "case10") continue;
-        //if (case_name != "case6") continue;
         generate_codes(case_name);
     }
     return 0;
