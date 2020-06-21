@@ -152,7 +152,6 @@ Expr IRMutator::visit(Ref<const Binary> op) {
             //Equation z0 = index_i //const_a, z1 = index_i % const_a has solution:
             //index_i = z0 * const_a + z1
             case BinaryOpType::Mod: {
-                //std::cout << "Inside Mod\n";
                 if (op->a->node_type() == IRNodeType::Index && op->b->node_type() == IRNodeType::IntImm) {
                     DivMode = true;
                     if (DivModInt != -1 && DivModInt != op->b.as<IntImm>()->value()) {
@@ -167,7 +166,6 @@ Expr IRMutator::visit(Ref<const Binary> op) {
                 }
             }
             case BinaryOpType::Div: {
-                //std::cout << "Inside Div\n";
                 if (op->a->node_type() == IRNodeType::Index && op->b->node_type() == IRNodeType::IntImm) {
                     DivMode = true;
                     if (DivModInt != -1 && DivModInt != op->b.as<IntImm>()->value()) {
@@ -303,7 +301,6 @@ Expr IRMutator::visit(Ref<const Var> op) {
     }
 
     if (is_left) {
-        //std::cout << "is_left: " << op->name << '\n';
         left = Var::make(op->type(), "d" + op->name, op->args, op->shape);
         set_left = true;
     } 
@@ -542,8 +539,7 @@ Group IRMutator::visit(Ref<const Kernel> op) {
 
         A.insert(a);
 
-        std::cout << "A is intialized as" << std::endl;
-        Print(A);
+        //Print(A);
 
         U = identity(U.n_rows);
         V = identity(V.n_rows);
@@ -551,14 +547,6 @@ Group IRMutator::visit(Ref<const Kernel> op) {
 
         transform(S,U,V);
         matrix R = U*A*V;
-        // std::cout<<"U*A*V="<<std::endl;
-        // Print(R);
-        // std::cout<<"--------------------"<<std::endl<<"S="<<std::endl;
-        // Print(S);
-        // std::cout<<"--------------------"<<std::endl<<"U="<<std::endl;
-        // Print(U);
-        // std::cout<<"--------------------"<<std::endl<<"V="<<std::endl;
-        // Print(V);
         extUY.clear();
         //Since U is an identity matrix here
         for (auto item: Y) {
